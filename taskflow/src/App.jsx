@@ -33,11 +33,40 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2)
 }
 
+// Check if due date is overdue
+function isOverdue(dueDate) {
+  if (!dueDate) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dueDate)
+  due.setHours(0, 0, 0, 0)
+  return due < today
+}
+
+// Check if due date is today
+function isToday(dueDate) {
+  if (!dueDate) return false
+  const today = new Date()
+  const due = new Date(dueDate)
+  return today.toDateString() === due.toDateString()
+}
+
+// Format date for display
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${month}月${day}日`
+}
+
 function App() {
   const [tasks, setTasks] = useState(() => loadTasks())
   const [newTask, setNewTask] = useState('')
+  const [newTaskDueDate, setNewTaskDueDate] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editText, setEditText] = useState('')
+  const [editDueDate, setEditDueDate] = useState('')
 
   // Save to localStorage when tasks change
   useEffect(() => {
@@ -53,11 +82,13 @@ function App() {
       id: generateId(),
       text,
       completed: false,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      dueDate: newTaskDueDate || null
     }
 
     setTasks([task, ...tasks])
     setNewTask('')
+    setNewTaskDueDate('')
   }
 
   // Handle Enter key
@@ -78,6 +109,7 @@ function App() {
   const handleStartEdit = (task) => {
     setEditingId(task.id)
     setEditText(task.text)
+    setEditDueDate(task.dueDate || '')
   }
 
   // Save edit
@@ -85,17 +117,19 @@ function App() {
     const text = editText.trim()
     if (text) {
       setTasks(tasks.map(task =>
-        task.id === id ? { ...task, text } : task
+        task.id === id ? { ...task, text, dueDate: editDueDate || null } : task
       ))
     }
     setEditingId(null)
     setEditText('')
+    setEditDueDate('')
   }
 
   // Cancel edit
   const handleCancelEdit = () => {
     setEditingId(null)
     setEditText('')
+    setEditDueDate('')
   }
 
   // Handle edit key press
@@ -129,7 +163,7 @@ function App() {
 
       {/* Task Input */}
       <div className="task-input-container">
-        <div className="task-input-wrapper">
+        <div className="task-input-main">
           <input
             type="text"
             className="task-input"
@@ -142,6 +176,25 @@ function App() {
             +
           </button>
         </div>
+        <div className="task-input-due-date">
+          <label htmlFor="due-date">截止日期:</label>
+          <input
+            type="date"
+            id="due-date"
+            className="due-date-input"
+            value={newTaskDueDate}
+            onChange={(e) => setNewTaskDueDate(e.target.value)}
+          />
+          {newTaskDueDate && (
+            <button 
+              className="clear-date-btn"
+              onClick={() => setNewTaskDueDate('')}
+              title="清除日期"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Task List */}
@@ -152,66 +205,100 @@ function App() {
             <p className="empty-text">暂无任务，开始添加吧！</p>
           </div>
         ) : (
-          tasks.map(task => (
-            <div
-              key={task.id}
-              className={`task-item ${task.completed ? 'completed' : ''}`}
-            >
-              {/* Checkbox */}
+          tasks.map(task => {
+            const overdue = !task.completed && isOverdue(task.dueDate)
+            const today = !task.completed && isToday(task.dueDate)
+            
+            return (
               <div
-                className={`checkbox ${task.completed ? 'checked' : ''}`}
-                onClick={() => handleToggleComplete(task.id)}
-              />
-
-              {/* Task Text or Edit Input */}
-              {editingId === task.id ? (
-                <input
-                  type="text"
-                  className="task-text-input"
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  onKeyDown={(e) => handleEditKeyPress(e, task.id)}
-                  onBlur={() => handleSaveEdit(task.id)}
-                  autoFocus
+                key={task.id}
+                className={`task-item ${task.completed ? 'completed' : ''} ${overdue ? 'overdue' : ''} ${today ? 'due-today' : ''}`}
+              >
+                {/* Checkbox */}
+                <div
+                  className={`checkbox ${task.completed ? 'checked' : ''}`}
+                  onClick={() => handleToggleComplete(task.id)}
                 />
-              ) : (
-                <span
-                  className="task-text"
-                  onDoubleClick={() => handleStartEdit(task)}
-                >
-                  {task.text}
-                </span>
-              )}
 
-              {/* Action Buttons */}
-              <div className="task-actions">
-                {editingId === task.id ? (
-                  <button
-                    className="action-button save-button"
-                    onClick={() => handleSaveEdit(task.id)}
-                    title="保存"
-                  >
-                    ✓
-                  </button>
-                ) : (
-                  <button
-                    className="action-button edit-button"
-                    onClick={() => handleStartEdit(task)}
-                    title="编辑"
-                  >
-                    ✎
-                  </button>
-                )}
-                <button
-                  className="action-button delete-button"
-                  onClick={() => handleDelete(task.id)}
-                  title="删除"
-                >
-                  ✕
-                </button>
+                {/* Task Content */}
+                <div className="task-content">
+                  {editingId === task.id ? (
+                    <div className="edit-mode">
+                      <input
+                        type="text"
+                        className="task-text-input"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={(e) => handleEditKeyPress(e, task.id)}
+                        autoFocus
+                      />
+                      <div className="edit-due-date">
+                        <input
+                          type="date"
+                          className="due-date-input"
+                          value={editDueDate}
+                          onChange={(e) => setEditDueDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <span
+                      className="task-text"
+                      onDoubleClick={() => handleStartEdit(task)}
+                    >
+                      {task.text}
+                    </span>
+                  )}
+                  
+                  {/* Due Date Tag */}
+                  {task.dueDate && !editingId && (
+                    <span className={`due-date-tag ${overdue ? 'overdue' : ''} ${today ? 'today' : ''}`}>
+                      📅 {formatDate(task.dueDate)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="task-actions">
+                  {editingId === task.id ? (
+                    <>
+                      <button
+                        className="action-button save-button"
+                        onClick={() => handleSaveEdit(task.id)}
+                        title="保存"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        className="action-button cancel-button"
+                        onClick={handleCancelEdit}
+                        title="取消"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="action-button edit-button"
+                        onClick={() => handleStartEdit(task)}
+                        title="编辑"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        className="action-button delete-button"
+                        onClick={() => handleDelete(task.id)}
+                        title="删除"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
 

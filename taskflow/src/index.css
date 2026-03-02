@@ -111,11 +111,6 @@ body {
   border: 1px solid var(--border-color);
 }
 
-.task-input-wrapper {
-  display: flex;
-  gap: var(--spacing-md);
-}
-
 .task-input {
   flex: 1;
   background: var(--bg-primary);
@@ -389,4 +384,138 @@ body {
   .task-actions {
     opacity: 1;
   }
+}
+
+/* Due Date Styles */
+.task-input-main {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.task-input-due-date {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.task-input-due-date label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.due-date-input {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.due-date-input:focus {
+  border-color: var(--color-primary);
+}
+
+/* Date input color scheme for dark theme */
+.due-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.clear-date-btn {
+  width: 24px;
+  height: 24px;
+  background: var(--border-color);
+  border: none;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.clear-date-btn:hover {
+  background: var(--color-danger);
+  color: white;
+}
+
+/* Task Content */
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+/* Edit Mode */
+.edit-mode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.edit-due-date {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.edit-due-date .due-date-input {
+  flex: 1;
+  max-width: 200px;
+}
+
+/* Due Date Tag */
+.due-date-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  width: fit-content;
+}
+
+.due-date-tag.overdue {
+  background: rgba(248, 81, 73, 0.15);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.due-date-tag.today {
+  background: rgba(210, 153, 34, 0.15);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+/* Overdue Task Item */
+.task-item.overdue {
+  border-left: 3px solid var(--color-danger);
+}
+
+.task-item.due-today {
+  border-left: 3px solid var(--color-warning);
+}
+
+/* Cancel Button */
+.cancel-button {
+  background: var(--color-secondary);
+  color: white;
+}
+
+.cancel-button:hover {
+  background: var(--text-secondary);
+  transform: scale(1.1);
 }
