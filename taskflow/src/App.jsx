@@ -60,18 +60,75 @@ function formatDate(dateStr) {
   return `${month}月${day}日`
 }
 
+// Format reminder time for display
+function formatReminderTime(dateTimeStr) {
+  if (!dateTimeStr) return ''
+  const date = new Date(dateTimeStr)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${month}月${day}日 ${hours}:${minutes}`
+}
+
 function App() {
   const [tasks, setTasks] = useState(() => loadTasks())
   const [newTask, setNewTask] = useState('')
   const [newTaskDueDate, setNewTaskDueDate] = useState('')
+  const [newTaskReminder, setNewTaskReminder] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editText, setEditText] = useState('')
   const [editDueDate, setEditDueDate] = useState('')
+  const [editReminder, setEditReminder] = useState('')
+  const [notificationPermission, setNotificationPermission] = useState(() => {
+    if ('Notification' in window) {
+      return Notification.permission
+    }
+    return 'default'
+  })
 
   // Save to localStorage when tasks change
   useEffect(() => {
     saveTasks(tasks)
   }, [tasks])
+
+  // Request notification permission
+  const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      alert('此浏览器不支持通知功能')
+      return
+    }
+    const permission = await Notification.requestPermission()
+    setNotificationPermission(permission)
+  }
+
+  // Check for reminders
+  useEffect(() => {
+    const checkReminders = () => {
+      const now = new Date()
+      tasks.forEach(task => {
+        if (task.reminderTime && !task.completed && !task.reminderSent) {
+          const reminderTime = new Date(task.reminderTime)
+          if (now >= reminderTime) {
+            if (notificationPermission === 'granted') {
+              new Notification('Task Flow 提醒', {
+                body: task.text,
+                icon: '/vite.svg'
+              })
+            }
+            setTasks(prevTasks => prevTasks.map(t =>
+              t.id === task.id ? { ...t, reminderSent: true } : t
+            ))
+          }
+        }
+      })
+    }
+
+    const interval = setInterval(checkReminders, 10000)
+    checkReminders()
+
+    return () => clearInterval(interval)
+  }, [tasks, notificationPermission])
 
   // Add new task
   const handleAddTask = () => {
@@ -83,12 +140,15 @@ function App() {
       text,
       completed: false,
       createdAt: Date.now(),
-      dueDate: newTaskDueDate || null
+      dueDate: newTaskDueDate || null,
+      reminderTime: newTaskReminder || null,
+      reminderSent: false
     }
 
     setTasks([task, ...tasks])
     setNewTask('')
     setNewTaskDueDate('')
+    setNewTaskReminder('')
   }
 
   // Handle Enter key
@@ -110,6 +170,7 @@ function App() {
     setEditingId(task.id)
     setEditText(task.text)
     setEditDueDate(task.dueDate || '')
+    setEditReminder(task.reminderTime || '')
   }
 
   // Save edit
@@ -117,12 +178,13 @@ function App() {
     const text = editText.trim()
     if (text) {
       setTasks(tasks.map(task =>
-        task.id === id ? { ...task, text, dueDate: editDueDate || null } : task
+        task.id === id ? { ...task, text, dueDate: editDueDate || null, reminderTime: editReminder || null, reminderSent: false } : task
       ))
     }
     setEditingId(null)
     setEditText('')
     setEditDueDate('')
+    setEditReminder('')
   }
 
   // Cancel edit
@@ -130,6 +192,7 @@ function App() {
     setEditingId(null)
     setEditText('')
     setEditDueDate('')
+    setEditReminder('')
   }
 
   // Handle edit key press
@@ -195,6 +258,34 @@ function App() {
             </button>
           )}
         </div>
+        <div className="task-input-due-date">
+          <label htmlFor="reminder">提醒时间:</label>
+          <input
+            type="datetime-local"
+            id="reminder"
+            className="due-date-input"
+            value={newTaskReminder}
+            onChange={(e) => setNewTaskReminder(e.target.value)}
+          />
+          {newTaskReminder && (
+            <button 
+              className="clear-date-btn"
+              onClick={() => setNewTaskReminder('')}
+              title="清除提醒"
+            >
+              ✕
+            </button>
+          )}
+          {notificationPermission !== 'granted' && (
+            <button 
+              className="notification-permission-btn"
+              onClick={requestNotificationPermission}
+              title="开启通知"
+            >
+              🔔
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Task List */}
@@ -239,6 +330,12 @@ function App() {
                           value={editDueDate}
                           onChange={(e) => setEditDueDate(e.target.value)}
                         />
+                        <input
+                          type="datetime-local"
+                          className="due-date-input"
+                          value={editReminder}
+                          onChange={(e) => setEditReminder(e.target.value)}
+                        />
                       </div>
                     </div>
                   ) : (
@@ -254,6 +351,13 @@ function App() {
                   {task.dueDate && !editingId && (
                     <span className={`due-date-tag ${overdue ? 'overdue' : ''} ${today ? 'today' : ''}`}>
                       📅 {formatDate(task.dueDate)}
+                    </span>
+                  )}
+
+                  {/* Reminder Tag */}
+                  {task.reminderTime && !editingId && (
+                    <span className="reminder-tag">
+                      🔔 {formatReminderTime(task.reminderTime)}
                     </span>
                   )}
                 </div>
