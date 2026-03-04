@@ -161,7 +161,7 @@ function App() {
   // Toggle task completion
   const handleToggleComplete = (id) => {
     setTasks(tasks.map(task =>
-      task.id === id ? { ...task, completed: !task.completed } : task
+      task.id === id ? { ...task, completed: !task.completed, reminderSent: false } : task
     ))
   }
 
@@ -330,12 +330,30 @@ function App() {
                           value={editDueDate}
                           onChange={(e) => setEditDueDate(e.target.value)}
                         />
+                        {editDueDate && (
+                          <button 
+                            className="clear-date-btn"
+                            onClick={() => setEditDueDate('')}
+                            title="清除日期"
+                          >
+                            ✕
+                          </button>
+                        )}
                         <input
                           type="datetime-local"
                           className="due-date-input"
                           value={editReminder}
                           onChange={(e) => setEditReminder(e.target.value)}
                         />
+                        {editReminder && (
+                          <button 
+                            className="clear-date-btn"
+                            onClick={() => setEditReminder('')}
+                            title="清除提醒"
+                          >
+                            ✕
+                          </button>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -356,8 +374,8 @@ function App() {
 
                   {/* Reminder Tag */}
                   {task.reminderTime && !editingId && (
-                    <span className="reminder-tag">
-                      🔔 {formatReminderTime(task.reminderTime)}
+                    <span className={`reminder-tag ${task.reminderSent ? 'sent' : ''}`}>
+                      {task.reminderSent ? '✅' : '🔔'} {formatReminderTime(task.reminderTime)}
                     </span>
                   )}
                 </div>

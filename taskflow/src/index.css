@@ -534,6 +534,12 @@ body {
   width: fit-content;
 }
 
+.reminder-tag.sent {
+  background: rgba(63, 185, 80, 0.15);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
 /* Notification Permission Button */
 .notification-permission-btn {
   width: 24px;
