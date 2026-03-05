@@ -44,6 +44,11 @@ html {
 body {
   font-family: var(--font-body);
   background-color: var(--bg-primary);
+  background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Flag_of_the_People%27s_Republic_of_China.svg/1200px-Flag_of_the_People%27s_Republic_of_China.svg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
@@ -57,6 +62,7 @@ body {
   flex-direction: column;
   align-items: center;
   padding: var(--spacing-xl) var(--spacing-lg);
+  background-color: rgba(13, 17, 23, 0.85);
 }
 
 /* App Container */
